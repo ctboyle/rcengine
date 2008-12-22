@@ -25,9 +25,8 @@ namespace RC.Engine.StateManagement
         /// <summary>
         /// I push states onto the stack by name.
         /// </summary>
-        /// <param name="label">The state name.</param>
         /// <param name="state">The state instance.</param>
-        void PushState(string label, RCGameState state);
+        void PushState(RCGameState state);
 
         /// <summary>
         /// I pop the top state off the stack.
@@ -57,7 +56,7 @@ namespace RC.Engine.StateManagement
 
         public event StateChangeHandler StateChanged;
 
-        public void PushState(string label, RCGameState state)
+        public void PushState(RCGameState state)
         {
             state.Initialize();
             _stateStack.Insert(0, state);
