@@ -1,13 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Microsoft.Xna.Framework;
 using RC.Engine.ContentManagement;
 using RC.Engine.StateManagement;
-using System.Diagnostics;
 using RC.Engine.Cameras;
 using RC.Engine.Rendering;
-using RC.Engine.Plugin;
 
 namespace RC.Engine.Base
 {
@@ -17,7 +13,6 @@ namespace RC.Engine.Base
     public class RCXnaGame : Game
     {
         private GraphicsDeviceManager _deviceMgr = null;
-        private RCPluginManager _pluginMgr = null;
         private IRCContentManager _contentMgr = null;
         private IRCCameraManager _cameraMgr = null;
         private IRCGameStateManager _stateMgr = null;
@@ -29,7 +24,6 @@ namespace RC.Engine.Base
         /// </summary>
         public RCXnaGame()
         {
-            _pluginMgr = new RCPluginManager(this);
             _deviceMgr = new GraphicsDeviceManager(this);
             _contentMgr = new RCContentManager(this);
             _cameraMgr = new RCCameraManager(this);
@@ -39,19 +33,21 @@ namespace RC.Engine.Base
         }
 
         /// <summary>
+        /// The Update Event.
+        /// </summary>
+        public event EventHandler<GameTimeEventArgs> UpdateEvent;
+
+        /// <summary>
+        /// The Draw Event.
+        /// </summary>
+        public event EventHandler<GameTimeEventArgs> DrawEvent;
+
+        /// <summary>
         /// The graphics device manager for the game.
         /// </summary>
         protected GraphicsDeviceManager DeviceMgr
         {
             get { return _deviceMgr; }
-        }
-
-        /// <summary>
-        /// The plugin manager for the game.
-        /// </summary>
-        protected RCPluginManager PluginMgr
-        {
-            get { return _pluginMgr; }
         }
 
         /// <summary>
@@ -110,9 +106,28 @@ namespace RC.Engine.Base
         /// <param name="gameTime">The current gametime.</param>
         protected override void Update(GameTime gameTime)
         {
-            RCPluginManager.GameTimeEventArgs args = new RCPluginManager.GameTimeEventArgs(gameTime);
-            _pluginMgr.RaiseUpdateEvent(args);
+            RaiseUpdateEvent(new GameTimeEventArgs(gameTime));
             base.Update(gameTime);
+        }
+
+        /// <summary>
+        /// Called on an draw pass.
+        /// </summary>
+        /// <param name="gameTime">The current gametime.</param>
+        protected override void Draw(GameTime gameTime)
+        {
+            RaiseDrawEvent(new GameTimeEventArgs(gameTime));
+            base.Draw(gameTime);
+        }
+
+        private void RaiseUpdateEvent(GameTimeEventArgs args)
+        {
+            if(UpdateEvent != null) UpdateEvent(this, args);
+        }
+
+        private void RaiseDrawEvent(GameTimeEventArgs args)
+        {
+            if (DrawEvent != null) DrawEvent(this, args);
         }
     }
 }

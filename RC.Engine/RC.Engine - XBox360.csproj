@@ -39,6 +39,7 @@
     <Compile Include="Animation\Controller.cs" />
     <Compile Include="Animation\DurationController.cs" />
     <Compile Include="Animation\KeyFrameController.cs" />
+    <Compile Include="Base\EventArgs.cs" />
     <Compile Include="SceneEffects\XnaModelEffect.cs" />
     <Compile Include="Base\XnaGame.cs" />
     <Compile Include="Cameras\Camera.cs" />
@@ -57,7 +58,6 @@
     <Compile Include="GraphicsManagement\Node.cs" />
     <Compile Include="GraphicsManagement\SceneInterfaces.cs" />
     <Compile Include="GraphicsManagement\Spatial.cs" />
-    <Compile Include="Plugin\PluginManager.cs" />
     <Compile Include="Rendering\AlphaState.cs" />
     <Compile Include="Rendering\Atributes.cs" />
     <Compile Include="Rendering\DepthBufferState.cs" />
