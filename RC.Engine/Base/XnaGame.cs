@@ -17,81 +17,12 @@ namespace RC.Engine.Base
     public class RCXnaGame : Game
     {
         private GraphicsDeviceManager _deviceMgr = null;
-
-        /// <summary>
-        /// The graphics device manager for the game.
-        /// </summary>
-        protected GraphicsDeviceManager DeviceMgr
-        {
-            get { return _deviceMgr; }
-            set { _deviceMgr = value; }
-        }
-
         private RCPluginManager _pluginMgr = null;
-
-        /// <summary>
-        /// The plugin manager for the game.
-        /// </summary>
-        protected RCPluginManager PluginMgr
-        {
-            get { return _pluginMgr; }
-            set { _pluginMgr = value; }
-        }
-        
         private IRCContentManager _contentMgr = null;
-
-        /// <summary>
-        /// The content manager for the game.
-        /// </summary>
-        protected IRCContentManager ContentMgr
-        {
-            get { return _contentMgr; }
-            set { _contentMgr = value; }
-        }
-
         private IRCCameraManager _cameraMgr = null;
-
-        /// <summary>
-        /// The camera manager for the game.
-        /// </summary>
-        protected IRCCameraManager CameraMgr
-        {
-            get { return _cameraMgr; }
-            set { _cameraMgr = value; }
-        }
-
         private IRCGameStateManager _stateMgr = null;
-
-        /// <summary>
-        /// The state manager for the game.
-        /// </summary>
-        protected IRCGameStateManager StateMgr
-        {
-            get { return _stateMgr; }
-            set { _stateMgr = value; }
-        }
-
         private IRCGameStateStack _stateStk = null;
-
-        /// <summary>
-        /// The state stack for the game.
-        /// </summary>
-        protected IRCGameStateStack StateStk
-        {
-            get { return _stateStk; }
-            set { _stateStk = value; }
-        }
-
         private IRCRenderManager _renderMgr = null;
-
-        /// <summary>
-        /// The render manager for the game.
-        /// </summary>
-        protected IRCRenderManager RenderMgr
-        {
-            get { return _renderMgr; }
-            set { _renderMgr = value; }
-        }
 
         /// <summary>
         /// I am a contructor that will setup the graphics device manager.
@@ -105,10 +36,62 @@ namespace RC.Engine.Base
             _stateMgr = new RCGameStateManager(this);
             _stateStk = (IRCGameStateStack) _stateMgr;
             _renderMgr = new RCRenderManager(this);
+        }
 
-            //_deviceMgr.IsFullScreen = true;
-            _deviceMgr.PreferredBackBufferWidth = 800;
-            _deviceMgr.PreferredBackBufferHeight = 600;
+        /// <summary>
+        /// The graphics device manager for the game.
+        /// </summary>
+        protected GraphicsDeviceManager DeviceMgr
+        {
+            get { return _deviceMgr; }
+        }
+
+        /// <summary>
+        /// The plugin manager for the game.
+        /// </summary>
+        protected RCPluginManager PluginMgr
+        {
+            get { return _pluginMgr; }
+        }
+
+        /// <summary>
+        /// The content manager for the game.
+        /// </summary>
+        protected IRCContentManager ContentMgr
+        {
+            get { return _contentMgr; }
+        }
+
+        /// <summary>
+        /// The camera manager for the game.
+        /// </summary>
+        protected IRCCameraManager CameraMgr
+        {
+            get { return _cameraMgr; }
+        }
+
+        /// <summary>
+        /// The state manager for the game.
+        /// </summary>
+        protected IRCGameStateManager StateMgr
+        {
+            get { return _stateMgr; }
+        }
+
+        /// <summary>
+        /// The state stack for the game.
+        /// </summary>
+        protected IRCGameStateStack StateStk
+        {
+            get { return _stateStk; }
+        }
+
+        /// <summary>
+        /// The render manager for the game.
+        /// </summary>
+        protected IRCRenderManager RenderMgr
+        {
+            get { return _renderMgr; }
         }
 
         /// <summary>
