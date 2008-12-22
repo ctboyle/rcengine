@@ -25,9 +25,6 @@ namespace RC.Engine.StateManagement
         public RCGameState(IServiceProvider services)
         {
             _services = services;
-
-            IRCGameStateManager stateMgr = (IRCGameStateManager)services.GetService(typeof(IRCGameStateManager));
-            stateMgr.StateChanged += new StateChangeHandler(StateChanged);
         }
 
         ~RCGameState()
@@ -72,19 +69,14 @@ namespace RC.Engine.StateManagement
         {
         }
 
-        protected virtual void StateChanged(
-            RCGameState newState,
-            RCGameState oldState
-            )
+        public virtual void Activate()
         {
-            if (newState == this)
-            {
-                IsVisible = IsUpdateable = true;
-            }
-            else
-            {
-                IsVisible = IsUpdateable = false;
-            }
+            IsVisible = IsUpdateable = true;
+        }
+
+        public virtual void Unactivate()
+        {
+            IsVisible = IsUpdateable = false;
         }
     }
 }
