@@ -10,18 +10,24 @@ using RC.Engine.Base;
 namespace RC.Engine.StateManagement
 {
     public delegate void StateChangeHandler(RCGameState newState, RCGameState oldState);
-
+    
     /// <summary>
-    /// I am the game state stack and maintain the current stack.  I have 
+    /// I am the game state manager and maintain the current stack.  I have 
     /// the ability to push, pop, and peek states from the stack.
     /// </summary>
-    public interface IRCGameStateStack
+    public interface IRCGameStateManager : IGameComponent
     {
+        /// <summary>
+        /// I inform that a state has changed.
+        /// </summary>
+        event StateChangeHandler StateChanged;
+
         /// <summary>
         /// I push states onto the stack by name.
         /// </summary>
         /// <param name="label">The state name.</param>
-        void PushState(string label);
+        /// <param name="state">The state instance.</param>
+        void PushState(string label, RCGameState state);
 
         /// <summary>
         /// I pop the top state off the stack.
@@ -35,45 +41,15 @@ namespace RC.Engine.StateManagement
         /// <returns>The state.</returns>
         RCGameState PeekState();
     }
-    
-    /// <summary>
-    /// I am the game state manager and maintain the current stack.  I have 
-    /// the ability to push, pop, and peek states from the stack.
-    /// Because states are not pushed, poped, etc. directly
-    /// but instead by a String name, I control the pool of states are 
-    /// used with the stack.
-    /// </summary>
-    public interface IRCGameStateManager : IGameComponent
+
+    internal class RCGameStateManager : DrawableGameComponent, IRCGameStateManager
     {
-        /// <summary>
-        /// I inform that a state has changed.
-        /// </summary>
-        event StateChangeHandler StateChanged;
-
-        /// <summary>
-        /// I add a state to the pool of states by name.
-        /// </summary>
-        /// <param name="label">The state name.</param>
-        /// <param name="state">The state.</param>
-        void AddState(string label, RCGameState state);
-
-        /// <summary>
-        /// I remove a state from the pool of states by name.
-        /// </summary>
-        /// <param name="label">The state name.</param>
-        void RemoveState(string label);
-    }
-
-    internal class RCGameStateManager : DrawableGameComponent, IRCGameStateManager, IRCGameStateStack
-    {
-        private Dictionary<string, RCGameState> _states = new Dictionary<string, RCGameState>();
         private List<RCGameState> _stateStack = new List<RCGameState>();
 
         public RCGameStateManager(Game game)
             : base(game)
         {
             game.Services.AddService(typeof(IRCGameStateManager), this);
-            game.Services.AddService(typeof(IRCGameStateStack), this);
 
             this.DrawOrder = 1;
             this.UpdateOrder = 1;
@@ -81,34 +57,20 @@ namespace RC.Engine.StateManagement
 
         public event StateChangeHandler StateChanged;
 
-        public void AddState(string label, RCGameState state)
+        public void PushState(string label, RCGameState state)
         {
-            _states.Add(label, state);
             state.Initialize();
-        }
+            _stateStack.Insert(0, state);
+            state.Activate();
 
-        public void RemoveState(string label)
-        {
-            RCGameState removeState = _states[label];
-            removeState.Dispose();
-            _states.Remove(label);
-        }
-
-        public void PushState(string label)
-        {
-            _stateStack.Insert(0, _states[label]);
-
-            if (StateChanged != null)
+            if (_stateStack.Count > 1)
             {
-                if (_stateStack.Count > 1)
-                {
-                    StateChanged(_stateStack[0], _stateStack[1]);
-                }
-                else
-                {
-                    StateChanged(_stateStack[0], null);
-                }   
+                FireStateChangedEvent(_stateStack[0], _stateStack[1]);
             }
+            else
+            {
+                FireStateChangedEvent(_stateStack[0], null);
+            }   
         }
 
         public RCGameState PopState()
@@ -117,17 +79,15 @@ namespace RC.Engine.StateManagement
 
             RCGameState oldState = _stateStack[0];
             _stateStack.RemoveAt(0);
+            oldState.Unactivate();
 
-            if (StateChanged != null)
+            if (_stateStack.Count >= 1)
             {
-                if (_stateStack.Count >= 1)
-                {
-                    StateChanged(_stateStack[0], oldState);
-                }
-                else
-                {
-                    StateChanged(null, oldState);
-                }
+                FireStateChangedEvent(_stateStack[0], oldState);
+            }
+            else
+            {
+                FireStateChangedEvent(null, oldState);
             }
 
             return oldState;
@@ -167,10 +127,12 @@ namespace RC.Engine.StateManagement
             base.Update(gameTime);
         }
 
-        protected override void UnloadContent()
+        private void FireStateChangedEvent(RCGameState newState, RCGameState oldState)
         {
-            _states.Clear();
-            base.UnloadContent();
+            if (StateChanged != null)
+            {
+                StateChanged(newState, oldState);
+            }
         }
     }
 }
