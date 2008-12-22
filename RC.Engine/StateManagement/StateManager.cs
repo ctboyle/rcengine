@@ -43,7 +43,7 @@ namespace RC.Engine.StateManagement
 
     internal class RCGameStateManager : DrawableGameComponent, IRCGameStateManager
     {
-        private List<RCGameState> _stateStack = new List<RCGameState>();
+        private LinkedList<RCGameState> _stateStack = new LinkedList<RCGameState>();
 
         public RCGameStateManager(Game game)
             : base(game)
@@ -56,57 +56,56 @@ namespace RC.Engine.StateManagement
 
         public event StateChangeHandler StateChanged;
 
-        public void PushState(RCGameState state)
+        public void PushState(RCGameState newState)
         {
-            state.Initialize();
-            _stateStack.Insert(0, state);
-            state.Activate();
+            RCGameState previousState = null;
 
-            if (_stateStack.Count > 1)
+            if(_stateStack.Count != 0)
             {
-                FireStateChangedEvent(_stateStack[0], _stateStack[1]);
+                previousState = _stateStack.First.Value;
+                previousState.Unactivate();
             }
-            else
-            {
-                FireStateChangedEvent(_stateStack[0], null);
-            }   
+
+            newState.Initialize();
+            _stateStack.AddFirst(newState);
+            newState.Activate();
+
+            FireStateChangedEvent(newState, previousState); 
         }
 
         public RCGameState PopState()
         {
             if (_stateStack.Count == 0) return null;
 
-            RCGameState oldState = _stateStack[0];
-            _stateStack.RemoveAt(0);
-            oldState.Unactivate();
+            RCGameState previousState = _stateStack.First.Value;
+            previousState.Unactivate();
+            _stateStack.RemoveFirst();
 
+            RCGameState newState = null;
             if (_stateStack.Count >= 1)
             {
-                FireStateChangedEvent(_stateStack[0], oldState);
-            }
-            else
-            {
-                FireStateChangedEvent(null, oldState);
+                newState = _stateStack.First.Value;
+                newState.Activate();
             }
 
-            return oldState;
+            FireStateChangedEvent(newState, previousState);
+
+            return previousState;
         }
 
         public RCGameState PeekState()
         {
             if (_stateStack.Count == 0) return null;
-            return _stateStack[0];
+            return _stateStack.First.Value;
         }
 
         public override void Draw(GameTime gameTime)
         {
-            for (int i = _stateStack.Count - 1; i >= 0; --i)
+            foreach (RCGameState state in _stateStack)
             {
-                RCGameState currentState = _stateStack[i];
+                if (!state.IsVisible) continue;
 
-                if (!currentState.IsVisible) continue;
-
-                currentState.Draw(gameTime);
+                state.Draw(gameTime);
             }
 
             base.Draw(gameTime);
@@ -114,13 +113,11 @@ namespace RC.Engine.StateManagement
 
         public override void Update(GameTime gameTime)
         {
-            for (int i = _stateStack.Count - 1; i >= 0; --i)
+            foreach (RCGameState state in _stateStack)
             {
-                RCGameState currentState = _stateStack[i];
+                if (!state.IsUpdateable) continue;
 
-                if (!currentState.IsUpdateable) continue;
-
-                currentState.Update(gameTime);
+                state.Update(gameTime);
             }
 
             base.Update(gameTime);
