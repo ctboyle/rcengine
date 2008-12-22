@@ -40,6 +40,7 @@
     <Compile Include="Animation\DurationController.cs" />
     <Compile Include="Animation\KeyFrameController.cs" />
     <Compile Include="Base\EventArgs.cs" />
+    <Compile Include="Base\ServiceProvider.cs" />
     <Compile Include="SceneEffects\XnaModelEffect.cs" />
     <Compile Include="Base\XnaGame.cs" />
     <Compile Include="Cameras\Camera.cs" />
