@@ -1,13 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Microsoft.Xna.Framework;
 using RC.Engine.ContentManagement;
 using RC.Engine.StateManagement;
-using System.Diagnostics;
 using RC.Engine.Cameras;
 using RC.Engine.Rendering;
-using RC.Engine.Plugin;
 
 namespace RC.Engine.Base
 {
@@ -17,6 +13,34 @@ namespace RC.Engine.Base
     public class RCXnaGame : Game
     {
         private GraphicsDeviceManager _deviceMgr = null;
+        private IRCContentManager _contentMgr = null;
+        private IRCCameraManager _cameraMgr = null;
+        private IRCGameStateManager _stateMgr = null;
+        private IRCGameStateStack _stateStk = null;
+        private IRCRenderManager _renderMgr = null;
+
+        /// <summary>
+        /// I am a contructor that will setup the graphics device manager.
+        /// </summary>
+        public RCXnaGame()
+        {
+            _deviceMgr = new GraphicsDeviceManager(this);
+            _contentMgr = new RCContentManager(this);
+            _cameraMgr = new RCCameraManager(this);
+            _stateMgr = new RCGameStateManager(this);
+            _stateStk = (IRCGameStateStack) _stateMgr;
+            _renderMgr = new RCRenderManager(this);
+        }
+
+        /// <summary>
+        /// The Update Event.
+        /// </summary>
+        public event EventHandler<GameTimeEventArgs> UpdateEvent;
+
+        /// <summary>
+        /// The Draw Event.
+        /// </summary>
+        public event EventHandler<GameTimeEventArgs> DrawEvent;
 
         /// <summary>
         /// The graphics device manager for the game.
@@ -24,21 +48,7 @@ namespace RC.Engine.Base
         protected GraphicsDeviceManager DeviceMgr
         {
             get { return _deviceMgr; }
-            set { _deviceMgr = value; }
         }
-
-        private RCPluginManager _pluginMgr = null;
-
-        /// <summary>
-        /// The plugin manager for the game.
-        /// </summary>
-        protected RCPluginManager PluginMgr
-        {
-            get { return _pluginMgr; }
-            set { _pluginMgr = value; }
-        }
-        
-        private IRCContentManager _contentMgr = null;
 
         /// <summary>
         /// The content manager for the game.
@@ -46,10 +56,7 @@ namespace RC.Engine.Base
         protected IRCContentManager ContentMgr
         {
             get { return _contentMgr; }
-            set { _contentMgr = value; }
         }
-
-        private IRCCameraManager _cameraMgr = null;
 
         /// <summary>
         /// The camera manager for the game.
@@ -57,10 +64,7 @@ namespace RC.Engine.Base
         protected IRCCameraManager CameraMgr
         {
             get { return _cameraMgr; }
-            set { _cameraMgr = value; }
         }
-
-        private IRCGameStateManager _stateMgr = null;
 
         /// <summary>
         /// The state manager for the game.
@@ -68,10 +72,7 @@ namespace RC.Engine.Base
         protected IRCGameStateManager StateMgr
         {
             get { return _stateMgr; }
-            set { _stateMgr = value; }
         }
-
-        private IRCGameStateStack _stateStk = null;
 
         /// <summary>
         /// The state stack for the game.
@@ -79,10 +80,7 @@ namespace RC.Engine.Base
         protected IRCGameStateStack StateStk
         {
             get { return _stateStk; }
-            set { _stateStk = value; }
         }
-
-        private IRCRenderManager _renderMgr = null;
 
         /// <summary>
         /// The render manager for the game.
@@ -90,25 +88,6 @@ namespace RC.Engine.Base
         protected IRCRenderManager RenderMgr
         {
             get { return _renderMgr; }
-            set { _renderMgr = value; }
-        }
-
-        /// <summary>
-        /// I am a contructor that will setup the graphics device manager.
-        /// </summary>
-        public RCXnaGame()
-        {
-            _pluginMgr = new RCPluginManager(this);
-            _deviceMgr = new GraphicsDeviceManager(this);
-            _contentMgr = new RCContentManager(this);
-            _cameraMgr = new RCCameraManager(this);
-            _stateMgr = new RCGameStateManager(this);
-            _stateStk = (IRCGameStateStack) _stateMgr;
-            _renderMgr = new RCRenderManager(this);
-
-            //_deviceMgr.IsFullScreen = true;
-            _deviceMgr.PreferredBackBufferWidth = 800;
-            _deviceMgr.PreferredBackBufferHeight = 600;
         }
 
         /// <summary>
@@ -127,9 +106,28 @@ namespace RC.Engine.Base
         /// <param name="gameTime">The current gametime.</param>
         protected override void Update(GameTime gameTime)
         {
-            RCPluginManager.GameTimeEventArgs args = new RCPluginManager.GameTimeEventArgs(gameTime);
-            _pluginMgr.RaiseUpdateEvent(args);
+            RaiseUpdateEvent(new GameTimeEventArgs(gameTime));
             base.Update(gameTime);
+        }
+
+        /// <summary>
+        /// Called on an draw pass.
+        /// </summary>
+        /// <param name="gameTime">The current gametime.</param>
+        protected override void Draw(GameTime gameTime)
+        {
+            RaiseDrawEvent(new GameTimeEventArgs(gameTime));
+            base.Draw(gameTime);
+        }
+
+        private void RaiseUpdateEvent(GameTimeEventArgs args)
+        {
+            if(UpdateEvent != null) UpdateEvent(this, args);
+        }
+
+        private void RaiseDrawEvent(GameTimeEventArgs args)
+        {
+            if (DrawEvent != null) DrawEvent(this, args);
         }
     }
 }
