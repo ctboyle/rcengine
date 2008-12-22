@@ -16,7 +16,6 @@ namespace RC.Engine.Base
         private IRCContentManager _contentMgr = null;
         private IRCCameraManager _cameraMgr = null;
         private IRCGameStateManager _stateMgr = null;
-        private IRCGameStateStack _stateStk = null;
         private IRCRenderManager _renderMgr = null;
 
         /// <summary>
@@ -28,19 +27,18 @@ namespace RC.Engine.Base
             _contentMgr = new RCContentManager(this);
             _cameraMgr = new RCCameraManager(this);
             _stateMgr = new RCGameStateManager(this);
-            _stateStk = (IRCGameStateStack) _stateMgr;
             _renderMgr = new RCRenderManager(this);
         }
 
         /// <summary>
         /// The Update Event.
         /// </summary>
-        public event EventHandler<GameTimeEventArgs> UpdateEvent;
+        public event EventHandler<RCGameTimeEventArgs> UpdateEvent;
 
         /// <summary>
         /// The Draw Event.
         /// </summary>
-        public event EventHandler<GameTimeEventArgs> DrawEvent;
+        public event EventHandler<RCGameTimeEventArgs> DrawEvent;
 
         /// <summary>
         /// The graphics device manager for the game.
@@ -75,14 +73,6 @@ namespace RC.Engine.Base
         }
 
         /// <summary>
-        /// The state stack for the game.
-        /// </summary>
-        protected IRCGameStateStack StateStk
-        {
-            get { return _stateStk; }
-        }
-
-        /// <summary>
         /// The render manager for the game.
         /// </summary>
         protected IRCRenderManager RenderMgr
@@ -106,7 +96,7 @@ namespace RC.Engine.Base
         /// <param name="gameTime">The current gametime.</param>
         protected override void Update(GameTime gameTime)
         {
-            RaiseUpdateEvent(new GameTimeEventArgs(gameTime));
+            RaiseUpdateEvent(new RCGameTimeEventArgs(gameTime));
             base.Update(gameTime);
         }
 
@@ -116,16 +106,16 @@ namespace RC.Engine.Base
         /// <param name="gameTime">The current gametime.</param>
         protected override void Draw(GameTime gameTime)
         {
-            RaiseDrawEvent(new GameTimeEventArgs(gameTime));
+            RaiseDrawEvent(new RCGameTimeEventArgs(gameTime));
             base.Draw(gameTime);
         }
 
-        private void RaiseUpdateEvent(GameTimeEventArgs args)
+        private void RaiseUpdateEvent(RCGameTimeEventArgs args)
         {
             if(UpdateEvent != null) UpdateEvent(this, args);
         }
 
-        private void RaiseDrawEvent(GameTimeEventArgs args)
+        private void RaiseDrawEvent(RCGameTimeEventArgs args)
         {
             if (DrawEvent != null) DrawEvent(this, args);
         }
