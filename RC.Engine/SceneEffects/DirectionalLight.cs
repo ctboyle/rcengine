@@ -31,6 +31,11 @@ namespace RC.Engine.SceneEffects
             }
         }
 
+        public RCLight GetLight()
+        {
+            return _light;
+        }
+		
         protected override void UpdateWorldData(GameTime gameTime)
         {
             base.UpdateWorldData(gameTime);

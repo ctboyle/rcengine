@@ -23,10 +23,10 @@ namespace RC.Engine.StateManagement
         event StateChangeHandler StateChanged;
 
         /// <summary>
-        /// I push states onto the stack by name.
+        /// I push registered states onto the stack by name.
         /// </summary>
-        /// <param name="state">The state instance.</param>
-        void PushState(RCGameState state);
+        /// <param name="stateLabel">The state name.</param>
+        void PushState(string stateLabel);
 
         /// <summary>
         /// I pop the top state off the stack.
@@ -39,10 +39,32 @@ namespace RC.Engine.StateManagement
         /// </summary>
         /// <returns>The state.</returns>
         RCGameState PeekState();
+
+        /// <summary>
+        /// I return named states that have been registered with <see cref=" AddNamedState"/>.
+        /// </summary>
+        /// <param name="label">The name of the state</param>
+        /// <returns>The named state instance assigned to given label. </returns>
+        RCGameState GetNamedState(string label);
+
+        /// <summary>
+        /// I register state instances to be perserved and tracked by the manager. You may
+        /// refer to the state by name,
+        /// </summary>
+        /// <param name="label">Same of the state</param>
+        /// <param name="state">The state</param>
+        void AddNamedState(string label, RCGameState state);
+
+        /// <summary>
+        /// Removes a state instance from the state manager by name
+        /// </summary>
+        /// <param name="label">Name of state</param>
+        void RemoveNamedState(string label);
     }
 
     internal class RCGameStateManager : DrawableGameComponent, IRCGameStateManager
     {
+        private Dictionary<string, RCGameState> _states = new Dictionary<string, RCGameState>();
         private LinkedList<RCGameState> _stateStack = new LinkedList<RCGameState>();
 
         public RCGameStateManager(Game game)
@@ -56,8 +78,27 @@ namespace RC.Engine.StateManagement
 
         public event StateChangeHandler StateChanged;
 
-        public void PushState(RCGameState newState)
+        public void AddNamedState(string label, RCGameState state)
         {
+            _states.Add(label, state);
+            state.Initialize();
+        }
+		
+		public void RemoveNamedState(string label)
+        {
+            RCGameState removeState = _states[label];
+            removeState.Dispose();
+            _states.Remove(label);
+        }
+		
+		public RCGameState GetNamedState(string label)
+		{
+			return _states[label];
+		}
+		
+        public void PushState(string label)
+        {
+            RCGameState nextState = GetNamedState(label);
             RCGameState previousState = null;
 
             if(_stateStack.Count != 0)
@@ -66,11 +107,10 @@ namespace RC.Engine.StateManagement
                 previousState.Unactivate();
             }
 
-            newState.Initialize();
-            _stateStack.AddFirst(newState);
-            newState.Activate();
+            _stateStack.AddFirst(nextState);
+            nextState.Activate();
 
-            FireStateChangedEvent(newState, previousState); 
+            FireStateChangedEvent(nextState, previousState); 
         }
 
         public RCGameState PopState()
@@ -121,6 +161,12 @@ namespace RC.Engine.StateManagement
             }
 
             base.Update(gameTime);
+        }
+		
+		protected override void UnloadContent()
+        {
+            _states.Clear();
+            base.UnloadContent();
         }
 
         private void FireStateChangedEvent(RCGameState newState, RCGameState oldState)
