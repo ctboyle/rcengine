@@ -4,10 +4,9 @@ using System.Text;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using RC.Engine.Base;
 
-using RC.Engine.GraphicsManagement;
-
-namespace RC.Engine.SceneEffects
+namespace RC.Engine.SceneGraph
 {
     /// <summary>
     /// Acts as a scene graph container for a single RCLight. 
@@ -40,7 +39,7 @@ namespace RC.Engine.SceneEffects
         {
             base.UpdateWorldData(gameTime);
 
-            // Update the light's cached postion with that of the light node.
+            // Update the light's postion to that of the light node.
             if (_light != null)
             {
                 _light.Transform = WorldTrans;

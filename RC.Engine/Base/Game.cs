@@ -10,8 +10,19 @@ namespace RC.Engine.Base
     /// <summary>
     /// The base game that all games should be derived.
     /// </summary>
-    public class RCXnaGame : Game
+    public class RCGame : Game
     {
+        private static RCGame _instance;
+       
+
+        public static RCGame Instance 
+        {
+            get 
+            {
+                return _instance; 
+            }
+        }
+
         private GraphicsDeviceManager _deviceMgr = null;
         private IRCContentManager _contentMgr = null;
         private IRCCameraManager _cameraMgr = null;
@@ -21,8 +32,16 @@ namespace RC.Engine.Base
         /// <summary>
         /// I am a contructor that will setup the graphics device manager.
         /// </summary>
-        public RCXnaGame()
+        public RCGame()
         {
+            if (_instance != null) 
+            {
+                throw new InvalidOperationException(
+                    "A game has laready been created. You may not create more than one");
+            }
+
+            _instance = this;
+
             _deviceMgr = new GraphicsDeviceManager(this);
             _contentMgr = new RCContentManager(this);
             _cameraMgr = new RCCameraManager(this);

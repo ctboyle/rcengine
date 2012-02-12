@@ -12,14 +12,14 @@ using RC.Engine.Base;
 using RC.Engine.ContentManagement;
 using RC.Engine.Cameras;
 using RC.Engine.Rendering;
-using RC.Engine.GraphicsManagement;
+using RC.Engine.SceneGraph;
 using RC.Engine.ContentManagement.ContentTypes;
 using RC.Engine.SceneEffects;
 using RC.Engine.StateManagement;
 
 namespace RC.Engine.Example
 {
-    public class ExampleGame : RCXnaGame
+    public class ExampleGame : RCGame
     {
         protected override void Initialize()
         {

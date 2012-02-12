@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-using RC.Engine.GraphicsManagement;
+using RC.Engine.SceneGraph;
 using RC.Engine.Rendering;
 
 namespace RC.Engine.Cameras

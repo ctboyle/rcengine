@@ -1,17 +1,40 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+
 using RC.Engine.StateManagement;
 using RC.Engine.Cameras;
+using RC.Engine.GameObject;
 using RC.Engine.Rendering;
-using RC.Engine.GraphicsManagement;
-using Microsoft.Xna.Framework;
+using RC.Engine.SceneGraph;
 using RC.Engine.SceneEffects;
 using RC.Engine.ContentManagement.ContentTypes;
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace RC.Engine.Example
 {
+    public class ShipMover : RCGameComponent
+    {
+        Matrix initialPos;
+        RCSpatial spatial;
+        float angle;
+
+        public override void Initialize()
+        {
+            spatial = GetComponent<RCSpatial>();
+            initialPos = spatial.LocalTrans;
+        }
+
+        public override void Update(GameTime gameTime)
+        {
+            angle += (float)(MathHelper.PiOver2 * gameTime.ElapsedRealTime.TotalSeconds);
+
+            spatial.LocalTrans = initialPos * Matrix.CreateRotationZ((float)Math.Sin(angle));
+        }
+    }
+
     class GameState : RCGameState
     {
         private IGraphicsDeviceService graphics = null;
@@ -35,24 +58,31 @@ namespace RC.Engine.Example
             // Create a Camera
             ///////////////////////////////////////////////////////////////
             RCCamera camera = new RCPerspectiveCamera(graphics.GraphicsDevice.Viewport);
-            Matrix cameraLookAt = Matrix.CreateLookAt(new Vector3(15.0f, 15.0f, 15.0f), Vector3.Zero, Vector3.Up);
+            Matrix cameraLookAt = Matrix.CreateLookAt(new Vector3(2.0f, 4.0f, 10.0f), Vector3.Zero, Vector3.Up);
             camera.LocalTrans = Matrix.Invert(cameraLookAt);
             cameraMgr.AddCamera("MainCamera", camera);
+
+            camera.AddComponent<KeyboardController>();
+
 
             ///////////////////////////////////////////////////////////////
             // Create the light
             ///////////////////////////////////////////////////////////////
-            RCLight light = new RCLight();
-            light.Diffuse = new Vector3(1.0f);
-            light.Specular = new Vector3(0.8f);
-            Matrix lightLookAt = Matrix.CreateLookAt(new Vector3(0f, 25.0f, 25.0f), Vector3.Zero, Vector3.Up);
-            light.Transform = Matrix.Invert(lightLookAt);
+            RCLight light = new RCLight(RCLight.LightType.Ambient);
+            light.Diffuse = new Vector4(1.0f);
+            light.Specular = new Vector4(0.8f);
+            light.SetDirection(new Vector3(-1.0f, -1.0f, 0.0f));
             
-
             ///////////////////////////////////////////////////////////////
             // Create the model
             ///////////////////////////////////////////////////////////////
-            RCModelContent model = new RCModelContent(@"Content\enemy");
+            RCModel model = new RCModel(@"Content\Models\p1_wedge");
+            RCSceneNode modelNode = model.ConvertToSceneGraph();
+            modelNode.LocalTrans = 
+                  Matrix.CreateRotationY(MathHelper.ToRadians(180.0f)) *
+                  Matrix.CreateScale(0.005f);
+
+            modelNode.AddComponent<ShipMover>();
 
             ///////////////////////////////////////////////////////////////
             // Construt the scene graph.
@@ -60,26 +90,17 @@ namespace RC.Engine.Example
             // Create the Root Node
             sceneRoot = new RCSceneNode();
 
-            // ALWAYS INCLUD CAMERA IN THE SCENE GRAPH SO IT CAN BE UPDATTED.
+            // ALWAYS INCLUDE CAMERA IN THE SCENE GRAPH SO IT CAN BE UPDATED.
             sceneRoot.AddChild(camera);
-            sceneRoot.AddChild(model);
+            sceneRoot.AddChild(modelNode);
 
             // Attach a light to the root; this is not a child node.
-            sceneRoot.AddLight(light);
+            //sceneRoot.AddLight(light);
 
-
-
-            /////////////////////////////////////////////////////////////////
-            // Create and add a render state statte to turn on depth testig for
-            // our model.
-            //////////////////////////////////////////////////////////////////
-            RCDepthBufferState depthState = new RCDepthBufferState();
-            depthState.DepthTestingEnabled = true;
-
-            model.Content.GlobalStates.Add(depthState);
+            //model.Content.GlobalStates.Add(depthState);
 
             // Update the renderstates so that lighting will be applied
-            sceneRoot.UpdateRS();
+            //sceneRoot.UpdateRS();
 
             base.Initialize();
         }
@@ -87,7 +108,7 @@ namespace RC.Engine.Example
         public override void Update(GameTime gameTime)
         {
             // Update the scene graph.
-            sceneRoot.UpdateGS(gameTime, true);
+            sceneRoot.Update(gameTime, true);
             base.Update(gameTime);
         }
         

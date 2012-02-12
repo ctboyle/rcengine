@@ -16,7 +16,6 @@ namespace RC.Engine.Rendering
         static RCRenderState()
         {
             Default.Add(new RCAlphaState());
-            Default.Add(new RCMaterialState());
             Default.Add(new RCDepthBufferState());
         }
 
@@ -25,8 +24,7 @@ namespace RC.Engine.Rendering
         public enum StateType
         {
             Alpha,
-            Material,
-            Depth
+            Depth,
             //CULL,
             //FOG,
             //POLYGONOFFSET,
