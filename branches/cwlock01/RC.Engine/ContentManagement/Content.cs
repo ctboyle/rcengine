@@ -4,7 +4,7 @@ using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Content;
 using System.Diagnostics;
-using RC.Engine.GraphicsManagement;
+using RC.Engine.SceneGraph;
 
 namespace RC.Engine.ContentManagement
 {

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using RC.Engine.GraphicsManagement;
+using RC.Engine.SceneGraph;
 
 namespace RC.Engine.Picking
 {

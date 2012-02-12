@@ -5,13 +5,13 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Content;
 
-using RC.Engine.GraphicsManagement.BoundingVolumes;
+using RC.Engine.SceneGraph.BoundingVolumes;
 using RC.Engine.Rendering;
 using RC.Engine.SceneEffects;
 using RC.Engine.ContentManagement;
 #endregion
 
-namespace RC.Engine.GraphicsManagement
+namespace RC.Engine.SceneGraph
 {
     /// <summary>
     /// Implements the ablity for a SceneObject to have Children.
@@ -74,7 +74,7 @@ namespace RC.Engine.GraphicsManagement
 
             foreach (RCSpatial child in _listChildren)
             {
-                child.UpdateGS(gameTime, false);
+                child.Update(gameTime, false);
             }
         }
 
@@ -106,19 +106,6 @@ namespace RC.Engine.GraphicsManagement
                         child.WorldBound
                     ); 
                 }
-            }
-        }
-
-        /// <summary>
-        /// Updates each child's render states and lights.
-        /// </summary>
-        /// <param name="stateStack"></param>
-        /// <param name="lightStack"></param>
-        protected override void  UpdateState(RCRenderStateStack stateStack, Stack<RCLight> lightStack)
-        {
-            foreach (RCSpatial child in _listChildren)
-            {
-                child.UpdateRS(stateStack, lightStack);
             }
         }
 

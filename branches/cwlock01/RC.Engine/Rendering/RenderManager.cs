@@ -4,9 +4,10 @@ using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using RC.Engine.Cameras;
-using RC.Engine.GraphicsManagement;
+using RC.Engine.SceneGraph;
 using RC.Engine.ContentManagement;
 using RC.Engine.Base;
+using RC.Engine.Rendering.EffectConstants;
 
 namespace RC.Engine.Rendering
 {
@@ -25,22 +26,7 @@ namespace RC.Engine.Rendering
     /// </summary>
     public interface IRCRenderManager
     {
-        IGraphicsDeviceService Graphics { get; }
-
-        /// <summary>
-        /// The current world transformation.
-        /// </summary>
-        Matrix World { get; }
-
-        /// <summary>
-        /// The current view transformation.
-        /// </summary>
-        Matrix View { get; }
-
-        /// <summary>
-        /// The current projection transformation.
-        /// </summary>
-        Matrix Projection { get; }
+        IGraphicsDeviceService GraphicsService { get; }
 
         /// <summary>
         /// I set the render state.
@@ -58,7 +44,7 @@ namespace RC.Engine.Rendering
         /// I draw a geometric object to the screen.
         /// </summary>
         /// <param name="geometry">The geometric object.</param>
-        void Draw(RCGeometry geometry);
+        void Draw(RCVisual visual);
 
         /// <summary>
         /// I draw a scene to the screen.
@@ -77,41 +63,25 @@ namespace RC.Engine.Rendering
     /// </summary>
     internal class RCRenderManager : IRCRenderManager
     {
-        private IGraphicsDeviceService _graphics = null;
-        private IRCCameraManager _cameraMgr = null;
-        private IRCContentRequester _contentRqst = null;
-        private Matrix _world = Matrix.Identity;
-        private RCGeometry _geometry = null;
-        private RCRenderStateCollection _renderStates = 
-            new RCRenderStateCollection(true);
+        public IGraphicsDeviceService GraphicsService { get; set; }
+        private IRCCameraManager CameraManager { get; set; }
+        private IRCContentRequester ContentRequester { get; set; }
+        private RCRenderStateCollection RenderStates {get; set; } 
 
-        public RCRenderManager(RCXnaGame game)
+        public RCRenderManager(RCGame game)
         {
             game.Services.AddService(typeof(IRCRenderManager), this);
 
-            _cameraMgr = (IRCCameraManager)game.Services.GetService(typeof(IRCCameraManager));
-            _graphics = (IGraphicsDeviceService)game.Services.GetService(typeof(IGraphicsDeviceService));
-            _contentRqst = (IRCContentRequester)game.Services.GetService(typeof(IRCContentRequester));
+            CameraManager = (IRCCameraManager)game.Services.GetService(typeof(IRCCameraManager));
+            GraphicsService = (IGraphicsDeviceService)game.Services.GetService(typeof(IGraphicsDeviceService));
+            ContentRequester = (IRCContentRequester)game.Services.GetService(typeof(IRCContentRequester));
+
+            RenderStates = new RCRenderStateCollection(true);
         }
 
-        public IGraphicsDeviceService Graphics
+        public GraphicsDevice Device
         {
-            get { return _graphics; }
-        }
-
-        public Matrix World
-        {
-            get { return _world; }
-        }
-
-        public Matrix View
-        {
-            get { return _cameraMgr.ActiveCamera.View; }
-        }
-
-        public Matrix Projection
-        {
-            get { return _cameraMgr.ActiveCamera.Projection; }
+            get { return GraphicsService.GraphicsDevice; }
         }
 
         public void SetRenderState(RCRenderStateCollection renderStates)
@@ -135,16 +105,16 @@ namespace RC.Engine.Rendering
             if (renderState != null)
             {
                 // Cache the new state
-                _renderStates[renderState.GetStateType()] = renderState;
+                RenderStates[renderState.GetStateType()] = renderState;
 
                 // Enable the state
-                renderState.ConfigureDevice(_graphics.GraphicsDevice);
+                renderState.ConfigureDevice(Device);
             }
         }
 
         public RCRenderState GetRenderState(RCRenderState.StateType type)
         {
-            return _renderStates[type];
+            return RenderStates[type];
         }
 
         /// <summary>
@@ -154,7 +124,7 @@ namespace RC.Engine.Rendering
         /// </summary>
         public void Draw(RCSpatial sceneRoot)
         {
-            if (_cameraMgr.ActiveCamera == null)
+            if (CameraManager.ActiveCamera == null)
             {
                 throw new InvalidOperationException("Active camera must be set before drawing scene");
             }
@@ -162,7 +132,7 @@ namespace RC.Engine.Rendering
             UpdateSceneCameraParameters();
             
             // Clear screen using current clear color.
-            if (_cameraMgr.ActiveCamera.ClearScreen)
+            if (CameraManager.ActiveCamera.ClearScreen)
             {
                 ClearScreen();
             }
@@ -172,88 +142,114 @@ namespace RC.Engine.Rendering
 
         public void ClearScreen()
         {
-            _graphics.GraphicsDevice.Clear(
-                _cameraMgr.ActiveCamera.ClearOptions,
-                _cameraMgr.ActiveCamera.ClearColor,
-                1.0f,
-                0
-                );
+            Device.Clear(
+                CameraManager.ActiveCamera.ClearOptions,
+                CameraManager.ActiveCamera.ClearColor,
+                1.0f, 0);
         }
 
-        public void Draw(RCGeometry geometry)
+        public void Draw(RCVisual visual)
         {
-            _geometry = geometry;
-
-            // Enable the geometry's renderstates
-            SetRenderState(geometry.RenderStates);
-
-            _world = geometry.WorldTrans;
-
-            // Render the geometry obejct with each of the effects.
-            bool isPrimaryEffect = true;
-            foreach (RCEffect effect in geometry.Effects)
+            RCVisualEffect visualEffect = visual.VisualEffect;
+            if (visualEffect != null)
             {
-                ApplyEffect(effect, isPrimaryEffect);
-                isPrimaryEffect = false;
+                Effect xnaEffect = visualEffect.Effect;
+
+                xnaEffect.Begin();
+
+                Enable(visual.VertexBuffer, visual.StreamOffset, visual.VertexFormat.GetVertexStrideSize(0));
+                Enable(visual.VertexFormat);
+
+                if (visual.IndexBuffer != null)
+                {
+                    Enable(visual.IndexBuffer);
+                }
+
+                foreach (EffectPass pass in xnaEffect.CurrentTechnique.Passes)
+                {
+                    visualEffect.EffectConstants.Update(visual, CameraManager.ActiveCamera);
+
+                    pass.Begin();
+                    DrawPrimitive(visual);
+                    pass.End();
+                }
+
+                xnaEffect.End();
             }
         }
 
         protected bool UpdateSceneCameraParameters()
         {
             // Ensure that the correct viewport is drawn to.
-            _graphics.GraphicsDevice.Viewport = _cameraMgr.ActiveCamera.Viewport;
+            Device.Viewport = CameraManager.ActiveCamera.Viewport;
             return true;
         }
 
-        private void ApplyEffect(RCEffect rcEffect, bool isPrimaryEffect)
+        private void DrawPrimitive(RCVisual visual)
         {
-            Effect shader = rcEffect.Content;
-
-            // Configure The Effect
-            rcEffect.CustomConfigure(this);
-
-            //_graphics.GraphicsDevice.RenderState.FillMode = FillMode.WireFrame;
-            
-            shader.Begin();
-
-            EffectPassCollection passes = shader.CurrentTechnique.Passes;
-            for (int iPass = 0; iPass < passes.Count; iPass++ )
+            switch(visual.PrimitiveType)
             {
-                rcEffect.SetRenderState(iPass, this, isPrimaryEffect);
+                case PrimitiveType.TriangleList:
+                    {
+                        RCTriangles triangles = (RCTriangles)visual;
+                        Device.DrawIndexedPrimitives(
+                            PrimitiveType.TriangleList,
+                            triangles.BaseVertex,
+                            triangles.MinVertexIndex,
+                            triangles.NumVertices,
+                            triangles.StartIndex,
+                            triangles.NumTriangles
+                            );
+                    }
+                    break;
+                case PrimitiveType.PointList:
+                    {
+                        RCPolyPoint polyPoint = (RCPolyPoint)visual;
+                        if (polyPoint.StartIndex < polyPoint.EndIndex)
+                        {
+                            // If the points are all in one consecutive range,
+                            // we can draw them all in a single call.
+                            Device.DrawPrimitives(PrimitiveType.PointList,
+                                                  polyPoint.StartIndex,
+                                                  polyPoint.EndIndex - polyPoint.StartIndex);
+                        }
+                        else
+                        {
+                            // If the points range wraps past the end, we must split them
+                            // over two draw calls.
+                            Device.DrawPrimitives(PrimitiveType.PointList,
+                                                  polyPoint.StartIndex,
+                                                  polyPoint.NumPoints - polyPoint.StartIndex);
 
-                passes[iPass].Begin();
-
-                DrawElements(_geometry.PartData);
-
-                passes[iPass].End();
-
-                rcEffect.RestoreRenderState(iPass, this, isPrimaryEffect);
+                            if (polyPoint.EndIndex > 0)
+                            {
+                                Device.DrawPrimitives(PrimitiveType.PointList,
+                                                      0,
+                                                      polyPoint.EndIndex);
+                            }
+                        }
+                    }
+                    break;
             }
-
-            shader.End();
         }
 
-        private void DrawElements(RCVertexRefrence partData)
+        private void Enable(IndexBuffer ibuffer)
         {
-            _graphics.GraphicsDevice.VertexDeclaration = partData.VertexDeclaration;
-            
-            _graphics.GraphicsDevice.Vertices[0].SetSource(
-                partData.VertexBuffer,
-                partData.StreamOffset,
-                partData.Stride
-                );
+            Device.Indices = ibuffer;
+        }
 
-            _graphics.GraphicsDevice.Indices = partData.IndexBuffer;
+        private void Enable(VertexBuffer vbuffer, int streamOffset, int stride)
+        {
+            Device.Vertices[0].SetSource(
+                        vbuffer,
+                        streamOffset,
+                        stride);
+        }
 
-            // Finally draw the actual triangles on the screen
-            _graphics.GraphicsDevice.DrawIndexedPrimitives(
-                PrimitiveType.TriangleList,
-                partData.BaseVertex, 0,
-                partData.NumVertices,
-                partData.StartIndex,
-                partData.NumPrimitives
-                );
-             
+
+        private void Enable(VertexDeclaration vformat)
+        {
+            Device.VertexDeclaration = vformat;
         }
     }
 }

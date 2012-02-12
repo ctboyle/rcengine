@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Storage;
 using RC.Engine.StateManagement;
-using RC.Engine.GraphicsManagement;
+using RC.Engine.SceneGraph;
 using RC.Engine.Rendering;
 using RC.Engine.Cameras;
 using RC.Engine.ContentManagement;

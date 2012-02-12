@@ -4,7 +4,7 @@ using System.Text;
 
 using Microsoft.Xna.Framework;
 
-namespace RC.Engine.GraphicsManagement.BoundingVolumes
+namespace RC.Engine.SceneGraph.BoundingVolumes
 {
     public class RCBoundingSphere: IRCBoundingVolume
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 using Microsoft.Xna.Framework;
-using RC.Engine.GraphicsManagement;
+using RC.Engine.SceneGraph;
 
 namespace RC.Engine.Animation
 {
